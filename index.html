@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+  <base target="_top">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard Analisis Pengguna DELIMa 3.0</title>
+  <script src="https://www.gstatic.com/charts/loader.js"></script>
+
+<style>
+:root{
+ --primary:#0b3d91;--blue:#1565c0;--green:#16803c;--red:#d93025;
+ --orange:#b45309;--bg:#f3f6fa;--card:#fff;--text:#1f2937;
+ --muted:#64748b;--border:#e2e8f0;--shadow:0 7px 24px rgba(15,23,42,.07)
+}
+*{box-sizing:border-box}
+body{margin:0;font-family:"Lato","Segoe UI",Arial,sans-serif;background:var(--bg);color:var(--text)}
+.header{background:#fff;border-bottom:1px solid var(--border);padding:18px 25px;display:flex;align-items:center;gap:15px;position:sticky;top:0;z-index:20;box-shadow:0 2px 12px rgba(0,0,0,.04)}
+.header img{width:58px;height:58px;object-fit:contain;border-radius:10px}
+.title{flex:1}.title h1{margin:0;color:var(--primary);font-size:clamp(20px,2.5vw,31px);font-weight:900}.school{margin-top:4px;color:var(--muted);font-weight:700}
+.btn{border:0;border-radius:9px;padding:10px 14px;cursor:pointer;font-weight:800}.btn-primary{background:var(--primary);color:#fff}.btn-light{background:#fff;color:var(--primary);border:1px solid var(--border)}
+main{padding:24px;max-width:1600px;margin:auto}
+.summary-title{font-weight:900;color:var(--primary);font-size:18px;margin:0 0 10px}
+.summary-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:15px;margin-bottom:24px}
+.summary-card{background:white;border:1px solid var(--border);border-radius:15px;padding:18px;box-shadow:var(--shadow)}
+.summary-card h3{margin:0 0 15px;color:var(--primary);font-size:15px}.mini-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.mini{text-align:center;padding:10px 5px;background:#f8fafc;border-radius:9px}.mini label{display:block;color:var(--muted);font-size:10px;font-weight:900;text-transform:uppercase}.mini b{font-size:22px;display:block;margin-top:3px}
+.green{color:var(--green)}.red{color:var(--red)}
+.comparison{background:white;border:1px solid var(--border);border-radius:15px;padding:18px;box-shadow:var(--shadow);margin-bottom:25px}
+.comparison h2{margin:0 0 10px;color:var(--primary);font-size:18px}
+.comp-grid{display:grid;grid-template-columns:1fr 1fr;gap:15px}.comp{padding:15px;background:#f8fafc;border-radius:10px}.bar{height:14px;background:#e2e8f0;border-radius:20px;overflow:hidden;margin-top:8px}.bar>i{display:block;height:100%;background:var(--green)}
+.section{margin-bottom:35px}.section-header{background:var(--primary);color:#fff;border-radius:14px 14px 0 0;padding:15px 20px;display:flex;align-items:center;justify-content:space-between}.section-header h2{margin:0;font-size:21px}.section-header .total{font-size:13px;font-weight:800}
+.content{display:grid;grid-template-columns:330px 1fr;gap:15px}.chart-card,.table-card{background:white;border:1px solid var(--border);border-top:0;box-shadow:var(--shadow)}.chart-card{padding:10px;border-radius:0 0 0 14px}.table-card{border-radius:0 0 14px 0;overflow:hidden}.chart{width:100%;height:320px}
+.chart-summary{display:flex;justify-content:center;gap:16px;flex-wrap:wrap;font-size:12px;font-weight:800;padding:4px 8px 12px}.dot{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:5px}
+.table-toolbar{padding:13px 15px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px;flex-wrap:wrap}.table-toolbar strong{font-size:13px;margin-right:auto}
+input.search,select.filter{padding:9px 10px;border:1px solid var(--border);border-radius:8px;outline:none;background:white;font-size:12px}
+input.search{width:200px}
+.table-wrap{max-height:470px;overflow:auto}
+table{width:100%;border-collapse:collapse;font-size:13px}th{position:sticky;top:0;z-index:2;background:#f8fafc;color:#475569;font-size:11px;text-transform:uppercase}
+th,td{padding:10px 13px;border-bottom:1px solid #edf2f7;text-align:left}.login{color:var(--green);font-weight:800}.not-login{color:var(--red);font-weight:800}.empty{padding:35px;text-align:center;color:var(--muted)}
+.top10{background:white;border:1px solid var(--border);border-radius:15px;box-shadow:var(--shadow);margin-bottom:25px;overflow:hidden}.top10 h2{padding:17px 20px;margin:0;color:var(--primary);font-size:18px;border-bottom:1px solid var(--border)}
+.top10-wrap{overflow:auto}.generated{color:var(--muted);font-size:12px;margin-top:15px}
+#loading{position:fixed;inset:0;z-index:100;display:none;align-items:center;justify-content:center;background:rgba(255,255,255,.75);backdrop-filter:blur(2px)}
+.loading-box{background:#fff;padding:25px 30px;border-radius:14px;box-shadow:0 10px 40px rgba(0,0,0,.15);text-align:center;font-weight:800}
+.spinner{width:30px;height:30px;margin:0 auto 12px;border:4px solid #dbeafe;border-top-color:var(--primary);border-radius:50%;animation:spin .8s linear infinite}@keyframes spin{to{transform:rotate(360deg)}}
+#toast{position:fixed;right:20px;bottom:20px;z-index:200;display:none;color:white;padding:13px 17px;border-radius:9px;font-size:13px;font-weight:700}
+@media(max-width:1000px){.content{grid-template-columns:1fr}.chart-card{border-radius:0}.table-card{border-radius:0 0 14px 14px}}
+@media(max-width:750px){.summary-grid{grid-template-columns:1fr}.comp-grid{grid-template-columns:1fr}.header{padding:13px}.header img{width:45px;height:45px}main{padding:13px}.refresh{display:none}}
+</style>
+</head>
+
+<body>
+<header class="header">
+ <img id="logo" alt="Logo sekolah">
+ <div class="title">
+  <h1>DASHBOARD ANALISIS PENGGUNA DELIMa 3.0</h1>
+  <div class="school" id="school">NAMA SEKOLAH</div>
+ </div>
+ <button class="btn btn-light" onclick="window.print()">🖨️ Cetak / PDF</button>
+ <button class="btn btn-primary" onclick="loadDashboard()">↻ Refresh</button>
+</header>
+
+<main>
+ <div class="summary-title">RINGKASAN PENGGUNA</div>
+
+ <div class="summary-grid">
+  <div class="summary-card">
+   <h3>👨‍🏫 GURU SAHAJA</h3>
+   <div class="mini-grid">
+    <div class="mini"><label>Jumlah</label><b id="gTotal">0</b></div>
+    <div class="mini green"><label>Login</label><b id="gLogged">0</b></div>
+    <div class="mini red"><label>Belum</label><b id="gNot">0</b></div>
+   </div>
+  </div>
+
+  <div class="summary-card">
+   <h3>👨‍🎓 MURID SAHAJA</h3>
+   <div class="mini-grid">
+    <div class="mini"><label>Jumlah</label><b id="mTotal">0</b></div>
+    <div class="mini green"><label>Login</label><b id="mLogged">0</b></div>
+    <div class="mini red"><label>Belum</label><b id="mNot">0</b></div>
+   </div>
+  </div>
+
+  <div class="summary-card">
+   <h3>👥 GURU + MURID</h3>
+   <div class="mini-grid">
+    <div class="mini"><label>Jumlah</label><b id="tTotal">0</b></div>
+    <div class="mini green"><label>Login</label><b id="tLogged">0</b></div>
+    <div class="mini red"><label>Belum</label><b id="tNot">0</b></div>
+   </div>
+  </div>
+ </div>
+
+ <div class="comparison">
+  <h2>📈 Perbandingan Kadar Login</h2>
+  <div class="comp-grid">
+   <div class="comp">
+    <b>Guru</b> — <span id="gRate">0%</span>
+    <div class="bar"><i id="gBar"></i></div>
+   </div>
+   <div class="comp">
+    <b>Murid</b> — <span id="mRate">0%</span>
+    <div class="bar"><i id="mBar"></i></div>
+   </div>
+  </div>
+ </div>
+
+ <!-- GURU -->
+ <section class="section">
+  <div class="section-header">
+   <h2>👨‍🏫 ANALISIS PENGGUNA GURU</h2>
+   <div class="total" id="guruTotal">Jumlah: 0</div>
+  </div>
+
+  <div class="content">
+   <div class="chart-card">
+    <div id="guruChart" class="chart"></div>
+    <div class="chart-summary">
+     <span><i class="dot" style="background:#16803c"></i>Login: <span id="guruLogged">0</span> (<span id="guruLoggedPct">0</span>%)</span>
+     <span><i class="dot" style="background:#d93025"></i>Belum: <span id="guruNotLogged">0</span> (<span id="guruNotLoggedPct">0</span>%)</span>
+    </div>
+   </div>
+
+   <div class="table-card">
+    <div class="table-toolbar">
+     <strong>Senarai Guru</strong>
+     <input class="search" id="guruSearch" oninput="applyFilters('guru')" placeholder="🔎 Cari ID / nama...">
+     <select class="filter" id="guruStatus" onchange="applyFilters('guru')">
+      <option value="all">Semua status</option>
+      <option value="logged">Sudah login</option>
+      <option value="notlogged">Belum login</option>
+     </select>
+    </div>
+    <div class="table-wrap">
+     <table>
+      <thead><tr><th>ID DELIMa</th><th>NAMA</th><th>LOG TERAKHIR</th></tr></thead>
+      <tbody id="guruBody"></tbody>
+     </table>
+    </div>
+   </div>
+  </div>
+ </section>
+
+ <!-- MURID -->
+ <section class="section">
+  <div class="section-header">
+   <h2>👨‍🎓 ANALISIS PENGGUNA MURID</h2>
+   <div class="total" id="muridTotal">Jumlah: 0</div>
+  </div>
+
+  <div class="content">
+   <div class="chart-card">
+    <div id="muridChart" class="chart"></div>
+    <div class="chart-summary">
+     <span><i class="dot" style="background:#16803c"></i>Login: <span id="muridLogged">0</span> (<span id="muridLoggedPct">0</span>%)</span>
+     <span><i class="dot" style="background:#d93025"></i>Belum: <span id="muridNotLogged">0</span> (<span id="muridNotLoggedPct">0</span>%)</span>
+    </div>
+   </div>
+
+   <div class="table-card">
+    <div class="table-toolbar">
+     <strong>Senarai Murid</strong>
+     <input class="search" id="muridSearch" oninput="applyFilters('murid')" placeholder="🔎 Cari ID / nama...">
+
+     <select class="filter" id="muridStatus" onchange="applyFilters('murid')">
+      <option value="all">Semua status</option>
+      <option value="logged">Sudah login</option>
+      <option value="notlogged">Belum login</option>
+     </select>
+
+     <select class="filter" id="muridKod" onchange="applyFilters('murid')">
+      <option value="">Semua KOD KELAS</option>
+     </select>
+
+     <select class="filter" id="muridKelas" onchange="applyFilters('murid')">
+      <option value="">Semua KELAS</option>
+     </select>
+    </div>
+
+    <div class="table-wrap">
+     <table>
+      <thead><tr><th>ID DELIMa</th><th>NAMA</th><th>KOD KELAS</th><th>KELAS</th><th>LOG TERAKHIR</th></tr></thead>
+      <tbody id="muridBody"></tbody>
+     </table>
+    </div>
+   </div>
+  </div>
+ </section>
+
+ <!-- TOP 10 -->
+ <section class="top10">
+  <h2>🏆 TOP 10 LOGIN TERKINI</h2>
+  <div class="top10-wrap">
+   <table>
+    <thead><tr><th>#</th><th>JENIS</th><th>ID DELIMa</th><th>NAMA</th><th>KOD KELAS</th><th>KELAS</th><th>LOG TERAKHIR</th></tr></thead>
+    <tbody id="top10Body"></tbody>
+   </table>
+  </div>
+ </section>
+
+ <div class="generated" id="generated"></div>
+</main>
+
+<div id="loading"><div class="loading-box"><div class="spinner"></div>Membaca data DELIMa...</div></div>
+<div id="toast"></div>
+
+<script>
+let data=null;
+let chartsReady=false;
+
+google.charts.load('current',{packages:['corechart']});
+google.charts.setOnLoadCallback(function(){chartsReady=true;loadDashboard()});
+
+function loadDashboard(){
+ if(!chartsReady)return;
+ document.getElementById('loading').style.display='flex';
+ google.script.run.withSuccessHandler(function(r){
+  data=r;render(r);document.getElementById('loading').style.display='none'
+ }).withFailureHandler(function(e){
+  document.getElementById('loading').style.display='none';toast(err(e),false)
+ }).getDashboardData()
+}
+
+function render(d){
+ const s=d.settings||{},g=d.guru||{},m=d.murid||{},t=d.total||{};
+ document.getElementById('school').textContent=s.schoolName||'NAMA SEKOLAH';
+ document.getElementById('logo').src=s.logoData||placeholder();
+
+ setSummary('g',g);setSummary('m',m);setSummary('t',t);
+
+ document.getElementById('gRate').textContent=(g.loggedPct||0)+'%';
+ document.getElementById('mRate').textContent=(m.loggedPct||0)+'%';
+ document.getElementById('gBar').style.width=(g.loggedPct||0)+'%';
+ document.getElementById('mBar').style.width=(m.loggedPct||0)+'%';
+
+ renderCategory('guru',g);
+ renderCategory('murid',m);
+ populateMuridFilters(m.rows||[]);
+ renderTop10(d.top10||[]);
+
+ document.getElementById('generated').textContent='Data dijana: '+(d.generatedAt||'-');
+}
+
+function setSummary(p,c){
+ document.getElementById(p+'Total').textContent=fmt(c.total);
+ document.getElementById(p+'Logged').textContent=fmt(c.logged);
+ document.getElementById(p+'Not').textContent=fmt(c.notLogged);
+}
+
+function renderCategory(type,c){
+ const p=type;
+ document.getElementById(p+'Total').textContent='Jumlah: '+fmt(c.total);
+ document.getElementById(p+'Logged').textContent=fmt(c.logged);
+ document.getElementById(p+'LoggedPct').textContent=c.loggedPct||0;
+ document.getElementById(p+'NotLogged').textContent=fmt(c.notLogged);
+ document.getElementById(p+'NotLoggedPct').textContent=c.notLoggedPct||0;
+ drawChart(p+'Chart',c);
+ applyFilters(type);
+}
+
+function drawChart(id,c){
+ const el=document.getElementById(id);
+ if(!c.total){el.innerHTML='<div class="empty">Tiada data.</div>';return}
+ const d=google.visualization.arrayToDataTable([
+  ['Status','Jumlah'],['Pernah Login',c.logged||0],['Belum Pernah Login',c.notLogged||0]
+ ]);
+ new google.visualization.PieChart(el).draw(d,{
+  pieHole:.52,pieSliceText:'percentage',
+  legend:{position:'bottom',textStyle:{fontSize:12}},
+  chartArea:{left:10,top:10,width:'95%',height:'82%'},
+  tooltip:{text:'value-and-percentage'},colors:['#16803c','#d93025'],fontName:'Arial'
+ });
+}
+
+function populateMuridFilters(rows){
+ const kod=document.getElementById('muridKod'),kelas=document.getElementById('muridKelas');
+ const currentKod=kod.value,currentKelas=kelas.value;
+ const kods=[...new Set(rows.map(r=>r.kodKelas||'').filter(Boolean))].sort();
+ const kelass=[...new Set(rows.map(r=>r.kelas||'').filter(Boolean))].sort();
+ kod.innerHTML='<option value="">Semua KOD KELAS</option>'+kods.map(x=>'<option value="'+escAttr(x)+'">'+esc(x)+'</option>').join('');
+ kelas.innerHTML='<option value="">Semua KELAS</option>'+kelass.map(x=>'<option value="'+escAttr(x)+'">'+esc(x)+'</option>').join('');
+ if(kods.includes(currentKod))kod.value=currentKod;
+ if(kelass.includes(currentKelas))kelas.value=currentKelas;
+}
+
+function applyFilters(type){
+ if(!data||!data[type])return;
+ const prefix=type;
+ const term=(document.getElementById(prefix+'Search').value||'').toLowerCase();
+ const status=document.getElementById(prefix+'Status').value;
+ let rows=data[type].rows||[];
+
+ if(status==='logged')rows=rows.filter(r=>r.logged);
+ if(status==='notlogged')rows=rows.filter(r=>!r.logged);
+
+ if(type==='murid'){
+  const kod=document.getElementById('muridKod').value;
+  const kelas=document.getElementById('muridKelas').value;
+  if(kod)rows=rows.filter(r=>r.kodKelas===kod);
+  if(kelas)rows=rows.filter(r=>r.kelas===kelas);
+ }
+
+ rows=rows.filter(r=>
+  String(r.id||'').toLowerCase().includes(term)||
+  String(r.name||'').toLowerCase().includes(term)||
+  String(r.lastLogin||'').toLowerCase().includes(term)
+ );
+
+ renderTable(type,rows);
+}
+
+function renderTable(type,rows){
+ const body=document.getElementById(type+'Body');
+ if(!rows.length){body.innerHTML='<tr><td colspan="'+(type==='murid'?5:3)+'" class="empty">Tiada rekod sepadan.</td></tr>';return}
+ body.innerHTML=rows.map(function(r){
+  if(type==='murid'){
+   return '<tr><td>'+esc(r.id)+'</td><td><strong>'+esc(r.name)+'</strong></td><td>'+esc(r.kodKelas)+'</td><td>'+esc(r.kelas)+'</td><td class="'+(r.logged?'login':'not-login')+'">'+esc(r.lastLogin||'BELUM PERNAH LOGIN')+'</td></tr>'
+  }
+  return '<tr><td>'+esc(r.id)+'</td><td><strong>'+esc(r.name)+'</strong></td><td class="'+(r.logged?'login':'not-login')+'">'+esc(r.lastLogin||'BELUM PERNAH LOGIN')+'</td></tr>'
+ }).join('')
+}
+
+function renderTop10(rows){
+ const b=document.getElementById('top10Body');
+ if(!rows.length){b.innerHTML='<tr><td colspan="7" class="empty">Tiada rekod login.</td></tr>';return}
+ b.innerHTML=rows.map(function(r,i){
+  return '<tr><td><strong>'+(i+1)+'</strong></td><td>'+esc(r.type)+'</td><td>'+esc(r.id)+'</td><td><strong>'+esc(r.name)+'</strong></td><td>'+esc(r.kodKelas||'-')+'</td><td>'+esc(r.kelas||'-')+'</td><td class="login">'+esc(r.lastLogin)+'</td></tr>'
+ }).join('')
+}
+
+function placeholder(){return 'data:image/svg+xml;charset=UTF-8,'+encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100"><rect width="100" height="100" rx="15" fill="white"/><text x="50" y="58" text-anchor="middle" font-size="34" fill="#0b3d91">S</text></svg>')}
+function fmt(n){return Number(n||0).toLocaleString('ms-MY')}
+function esc(v){return String(v==null?'':v).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#039;')}
+function escAttr(v){return String(v||'').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
+function err(e){return e&&e.message?e.message:String(e||'Ralat tidak diketahui.')}
+function toast(msg,ok){const x=document.getElementById('toast');x.textContent=msg;x.style.display='block';x.style.background=ok?'#166534':'#b91c1c';clearTimeout(window.tt);window.tt=setTimeout(()=>x.style.display='none',4000)}
+</script>
+</body>
+</html>
